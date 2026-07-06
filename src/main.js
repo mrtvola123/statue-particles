@@ -23,7 +23,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x061114, 1);
 
-let particleData = generateStatueParticles({ count: 18000, seed: 1886 });
+let particleData = createEmptyParticleData();
 let positions = new Float32Array(particleData.targetPositions);
 const geometry = new THREE.BufferGeometry();
 geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
@@ -68,6 +68,7 @@ const material = new THREE.ShaderMaterial({
 });
 
 const particles = new THREE.Points(geometry, material);
+particles.visible = false;
 particles.rotation.y = -0.28;
 scene.add(particles);
 applyResponsiveFrame();
@@ -86,6 +87,7 @@ const clock = new THREE.Clock();
 globalThis.__libertyDebug = {
   getTransition: () => transition,
   isDisintegrated: () => isDisintegrated,
+  isParticleVisible: () => particles.visible,
   getParticleSource: () => particleData.source ?? "procedural",
   getParticleCount: () => particleData.count
 };
@@ -174,9 +176,12 @@ async function loadDetailedStatue() {
     });
 
     replaceParticleData(meshParticles);
+    particles.visible = true;
     stateLabel.textContent = isDisintegrated ? "Disintegrated" : "Assembled";
   } catch (error) {
     console.warn("Falling back to procedural statue particles.", error);
+    replaceParticleData(generateStatueParticles({ count: 18000, seed: 1886 }));
+    particles.visible = true;
     stateLabel.textContent = "Assembled";
   }
 }
@@ -192,6 +197,17 @@ function replaceParticleData(nextParticleData) {
   geometry.setAttribute("color", new THREE.BufferAttribute(particleData.colors, 3));
   geometry.setAttribute("size", new THREE.BufferAttribute(particleData.sizes, 1));
   geometry.attributes.position.needsUpdate = true;
+}
+
+function createEmptyParticleData() {
+  return {
+    count: 0,
+    source: "loading",
+    targetPositions: new Float32Array(0),
+    scatterPositions: new Float32Array(0),
+    colors: new Float32Array(0),
+    sizes: new Float32Array(0)
+  };
 }
 
 function createStarField() {

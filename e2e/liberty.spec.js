@@ -1,5 +1,28 @@
 import { expect, test } from "@playwright/test";
 
+test("does not flash the procedural fallback while the mesh model is loading", async ({ page }) => {
+  let releaseModelRequest;
+  const modelRequestReleased = new Promise((resolve) => {
+    releaseModelRequest = resolve;
+  });
+
+  await page.route("**/models/libertystatue.glb", async (route) => {
+    await modelRequestReleased;
+    await route.continue();
+  });
+
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => window.__libertyDebug?.getParticleSource() === "loading");
+
+  await expect(page.locator("#state-label")).toHaveText("Loading scan");
+  expect(await page.evaluate(() => window.__libertyDebug.getParticleCount())).toBe(0);
+  expect(await page.evaluate(() => window.__libertyDebug.isParticleVisible())).toBe(false);
+
+  releaseModelRequest();
+  await page.waitForFunction(() => window.__libertyDebug?.getParticleSource() === "mesh");
+  await page.waitForFunction(() => window.__libertyDebug?.isParticleVisible() === true);
+});
+
 test("renders the particle statue and toggles between states", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Liberty Particles" })).toBeVisible();
