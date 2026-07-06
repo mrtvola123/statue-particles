@@ -5,7 +5,7 @@ export default defineConfig({
     include: ["test/**/*.test.js"],
     coverage: {
       provider: "v8",
-      include: ["src/statue.js", "src/modelParticles.js"],
+      include: ["src/statue.js", "src/modelParticles.js", "src/celebration.js"],
       reporter: ["text"],
       thresholds: {
         branches: 80,

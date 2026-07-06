@@ -28,6 +28,9 @@ test("renders the particle statue and toggles between states", async ({ page }) 
   await expect(page.getByRole("heading", { name: "Liberty Particles" })).toBeVisible();
   await page.waitForFunction(() => window.__libertyDebug?.getParticleSource() === "mesh");
   await page.waitForFunction(() => window.__libertyDebug?.getParticleCount() >= 70000);
+  await page.waitForFunction(() => document.body.dataset.celebration === "america250");
+  await page.waitForFunction(() => window.__libertyDebug?.getIntroLabel() === "1776");
+  await page.waitForFunction(() => window.__libertyDebug?.getActiveFireworks() > 0);
   await expect(page.locator("#state-label")).toHaveText("Assembled");
 
   await page.waitForTimeout(800);
