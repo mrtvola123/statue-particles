@@ -165,6 +165,45 @@ button:focus-visible {
   line-height: 1;
 }
 
+.quality-control {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 42px;
+  padding: 3px;
+  border: 1px solid rgba(144, 245, 218, 0.32);
+  border-radius: 8px;
+  background: rgba(5, 25, 29, 0.62);
+  box-shadow: 0 12px 38px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(14px);
+}
+
+.quality-option {
+  min-height: 34px;
+  min-width: 46px;
+  padding: 0 10px;
+  border-color: transparent;
+  box-shadow: none;
+  background: transparent;
+  color: rgba(237, 248, 240, 0.72);
+  font-size: 0.76rem;
+  font-weight: 800;
+  backdrop-filter: none;
+}
+
+.quality-option:hover {
+  border-color: rgba(255, 210, 83, 0.42);
+  background: rgba(16, 44, 45, 0.62);
+  color: #effffb;
+}
+
+.quality-option[aria-pressed="true"] {
+  border-color: rgba(255, 210, 83, 0.58);
+  background: rgba(255, 210, 83, 0.14);
+  color: #fff4bd;
+}
+
 #state-label {
   margin: 0;
   min-width: 108px;
@@ -251,6 +290,19 @@ body::after {
     min-height: 40px;
     padding: 0 13px;
     font-size: 0.86rem;
+  }
+
+  .quality-control {
+    width: min(100%, 358px);
+    min-height: 38px;
+  }
+
+  .quality-option {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 31px;
+    padding: 0 5px;
+    font-size: 0.68rem;
   }
 
   .credit {

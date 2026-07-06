@@ -26,8 +26,10 @@ test("does not flash the procedural fallback while the mesh model is loading", a
 test("renders the particle statue and toggles between states", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Liberty Particles" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Auto" })).toHaveAttribute("aria-pressed", "true");
   await page.waitForFunction(() => window.__libertyDebug?.getParticleSource() === "mesh");
-  await page.waitForFunction(() => window.__libertyDebug?.getParticleCount() >= 70000);
+  await page.waitForFunction(() => window.__libertyDebug?.getParticleCount() >= 45000);
+  await page.waitForFunction(() => window.__libertyDebug?.getQualityMode() === "auto");
   await page.waitForFunction(() => document.body.dataset.celebration === "america250");
   await page.waitForFunction(() => window.__libertyDebug?.getIntroLabel() === "1776");
   await page.waitForFunction(() => window.__libertyDebug?.getActiveFireworks() > 0);
@@ -46,20 +48,45 @@ test("renders the particle statue and toggles between states", async ({ page }) 
   await page.waitForFunction(() => window.__libertyDebug?.getTransition() < 0.2);
 });
 
+test("changes particle quality without toggling the statue and persists the selection", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForFunction(() => window.__libertyDebug?.getParticleSource() === "mesh");
+
+  await page.getByRole("button", { name: "Performance" }).click();
+
+  await page.waitForFunction(() => window.__libertyDebug?.getQualityMode() === "performance");
+  await page.waitForFunction(() => window.__libertyDebug?.isResamplingMesh() === false);
+  await page.waitForFunction(() => window.__libertyDebug?.getParticleCount() === 45000);
+  await expect(page.locator("#state-label")).toHaveText("Assembled");
+  await expect(page.getByRole("button", { name: "Performance" })).toHaveAttribute("aria-pressed", "true");
+  expect(await page.evaluate(() => localStorage.getItem("liberty-particle-quality"))).toBe("performance");
+  expect(await page.evaluate(() => window.__libertyDebug.isDisintegrated())).toBe(false);
+
+  await page.reload();
+
+  await expect(page.getByRole("button", { name: "Performance" })).toHaveAttribute("aria-pressed", "true");
+  await page.waitForFunction(() => window.__libertyDebug?.getParticleSource() === "mesh");
+  await page.waitForFunction(() => window.__libertyDebug?.getParticleCount() === 45000);
+});
+
 test("fits the interface on a phone-sized viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
 
   const heading = page.getByRole("heading", { name: "Liberty Particles" });
   const button = page.getByRole("button", { name: "Toggle particle disintegration" });
+  const qualityControl = page.getByRole("group", { name: "Particle quality" });
 
   await expect(heading).toBeVisible();
   await expect(button).toBeVisible();
+  await expect(qualityControl).toBeVisible();
 
   const headingBox = await heading.boundingBox();
   const buttonBox = await button.boundingBox();
+  const qualityBox = await qualityControl.boundingBox();
   expect(headingBox.x + headingBox.width).toBeLessThanOrEqual(390);
   expect(buttonBox.x + buttonBox.width).toBeLessThanOrEqual(390);
+  expect(qualityBox.x + qualityBox.width).toBeLessThanOrEqual(390);
 });
 
 async function countLitCanvasPixels(page) {

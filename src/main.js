@@ -1,5 +1,12 @@
 import * as THREE from "three";
 import { createFireworkSchedule, getAmerica250IntroFrame } from "./celebration.js";
+import {
+  QUALITY_STORAGE_KEY,
+  createDeviceProfile,
+  getQualityLabel,
+  normalizeQualityMode,
+  resolveParticleCount
+} from "./quality.js";
 import { generateStatueParticles } from "./statue.js";
 import "./style.css";
 
@@ -7,6 +14,7 @@ const canvas = document.querySelector("#liberty-canvas");
 const toggleButton = document.querySelector("#toggle-button");
 const buttonLabel = document.querySelector("#button-label");
 const stateLabel = document.querySelector("#state-label");
+const qualityButtons = [...document.querySelectorAll("[data-quality]")];
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x061114, 0.055);
@@ -78,7 +86,6 @@ const starField = createStarField();
 scene.add(starField);
 const celebration = createCelebrationScene();
 scene.add(celebration.group);
-loadDetailedStatue();
 
 let isDisintegrated = false;
 let transition = 0;
@@ -86,9 +93,19 @@ let targetTransition = 0;
 let pointerStartedOnButton = false;
 let introStartedAt = null;
 let nextFireworkIndex = 0;
+let selectedQualityMode = readStoredQualityMode();
+let resolvedParticleCount = 0;
+let loadedStatueScene = null;
+let generateModelParticlesFromMesh = null;
+let isResamplingMesh = false;
+let meshSampleRequestId = 0;
 const pointer = { x: 0, y: 0 };
 const clock = new THREE.Clock();
 const shockwaves = [];
+
+updateQualityControls();
+bindQualityControls();
+loadDetailedStatue();
 
 globalThis.__libertyDebug = {
   getTransition: () => transition,
@@ -96,6 +113,9 @@ globalThis.__libertyDebug = {
   isParticleVisible: () => particles.visible,
   getParticleSource: () => particleData.source ?? "procedural",
   getParticleCount: () => particleData.count,
+  getQualityMode: () => selectedQualityMode,
+  getResolvedParticleCount: () => resolvedParticleCount,
+  isResamplingMesh: () => isResamplingMesh,
   getIntroLabel: () => celebration.currentLabel,
   getActiveFireworks: () => celebration.activeBursts
 };
@@ -204,22 +224,100 @@ async function loadDetailedStatue() {
       import("./modelParticles.js")
     ]);
     const gltf = await new GLTFLoader().loadAsync("/models/libertystatue.glb");
-    const meshParticles = generateModelParticles(gltf.scene, {
-      count: 70000,
-      seed: 1886,
-      height: 6.7,
-      scatterRadius: 8.9
-    });
-
-    replaceParticleData(meshParticles);
-    particles.visible = true;
-    stateLabel.textContent = isDisintegrated ? "Disintegrated" : "Assembled";
+    loadedStatueScene = gltf.scene;
+    generateModelParticlesFromMesh = generateModelParticles;
+    await resampleDetailedStatue();
     startAmerica250Intro();
   } catch (error) {
     console.warn("Falling back to procedural statue particles.", error);
     replaceParticleData(generateStatueParticles({ count: 18000, seed: 1886 }));
     particles.visible = true;
     stateLabel.textContent = "Assembled";
+  }
+}
+
+async function resampleDetailedStatue() {
+  if (!loadedStatueScene || !generateModelParticlesFromMesh) {
+    return;
+  }
+
+  const requestId = meshSampleRequestId + 1;
+  meshSampleRequestId = requestId;
+  isResamplingMesh = true;
+  stateLabel.textContent = `Rendering ${getQualityLabel(selectedQualityMode)}`;
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+
+  try {
+    const particleCount = resolveParticleCount(selectedQualityMode, createDeviceProfile(window, navigator));
+    const meshParticles = generateModelParticlesFromMesh(loadedStatueScene, {
+      count: particleCount,
+      seed: 1886,
+      height: 6.7,
+      scatterRadius: 8.9
+    });
+
+    if (requestId !== meshSampleRequestId) {
+      return;
+    }
+
+    resolvedParticleCount = particleCount;
+    replaceParticleData(meshParticles);
+    particles.visible = true;
+  } catch (error) {
+    console.warn("Unable to resample statue particles.", error);
+  } finally {
+    if (requestId === meshSampleRequestId) {
+      isResamplingMesh = false;
+      stateLabel.textContent = isDisintegrated ? "Disintegrated" : "Assembled";
+    }
+  }
+}
+
+function bindQualityControls() {
+  for (const button of qualityButtons) {
+    button.addEventListener("pointerdown", () => {
+      pointerStartedOnButton = true;
+    });
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setQualityMode(button.dataset.quality);
+    });
+  }
+}
+
+function setQualityMode(mode) {
+  const nextMode = normalizeQualityMode(mode);
+
+  if (nextMode === selectedQualityMode && particleData.source === "mesh") {
+    return;
+  }
+
+  selectedQualityMode = nextMode;
+  storeQualityMode(nextMode);
+  updateQualityControls();
+  void resampleDetailedStatue();
+}
+
+function updateQualityControls() {
+  for (const button of qualityButtons) {
+    const isActive = button.dataset.quality === selectedQualityMode;
+    button.setAttribute("aria-pressed", String(isActive));
+  }
+}
+
+function readStoredQualityMode() {
+  try {
+    return normalizeQualityMode(localStorage.getItem(QUALITY_STORAGE_KEY));
+  } catch {
+    return "auto";
+  }
+}
+
+function storeQualityMode(mode) {
+  try {
+    localStorage.setItem(QUALITY_STORAGE_KEY, mode);
+  } catch {
+    // Storage can be disabled in private or embedded browser contexts.
   }
 }
 
