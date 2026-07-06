@@ -1,0 +1,176 @@
+:root {
+  color-scheme: dark;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #061114;
+  color: #edf8f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  min-width: 320px;
+}
+
+canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  cursor: pointer;
+}
+
+.hud {
+  position: fixed;
+  top: clamp(18px, 4vw, 42px);
+  left: clamp(18px, 4vw, 46px);
+  z-index: 2;
+  max-width: min(430px, calc(100vw - 36px));
+  pointer-events: none;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #8bf2dc;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.25rem, 7vw, 5.8rem);
+  line-height: 0.93;
+  letter-spacing: 0;
+  text-wrap: balance;
+  text-shadow: 0 0 34px rgba(139, 242, 220, 0.22);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+
+button {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid rgba(144, 245, 218, 0.46);
+  border-radius: 8px;
+  background: rgba(5, 25, 29, 0.72);
+  color: #effffb;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 750;
+  letter-spacing: 0;
+  box-shadow: 0 12px 38px rgba(0, 0, 0, 0.26);
+  backdrop-filter: blur(14px);
+}
+
+button:hover {
+  border-color: rgba(255, 210, 83, 0.82);
+  background: rgba(16, 44, 45, 0.84);
+}
+
+button:focus-visible {
+  outline: 3px solid rgba(255, 210, 83, 0.72);
+  outline-offset: 4px;
+}
+
+.button-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  color: #ffd75a;
+  line-height: 1;
+}
+
+#state-label {
+  margin: 0;
+  min-width: 108px;
+  color: rgba(237, 248, 240, 0.76);
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.credit {
+  position: fixed;
+  right: clamp(14px, 3vw, 34px);
+  bottom: clamp(12px, 2.5vw, 28px);
+  z-index: 2;
+  max-width: min(330px, calc(100vw - 28px));
+  margin: 0;
+  color: rgba(237, 248, 240, 0.56);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.credit a {
+  color: rgba(139, 242, 220, 0.78);
+  text-decoration: none;
+}
+
+.credit a:hover {
+  color: #ffd75a;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 64% 45%, rgba(69, 188, 166, 0.12), transparent 34%),
+    linear-gradient(90deg, rgba(3, 12, 14, 0.76), transparent 46%, rgba(3, 12, 14, 0.28));
+}
+
+@media (max-width: 680px) {
+  .hud {
+    top: 16px;
+    left: 16px;
+  }
+
+  .eyebrow {
+    font-size: 0.64rem;
+  }
+
+  h1 {
+    max-width: 290px;
+    font-size: clamp(2rem, 14vw, 3.5rem);
+  }
+
+  .toolbar {
+    margin-top: 16px;
+    gap: 10px;
+  }
+
+  button {
+    min-height: 40px;
+    padding: 0 13px;
+    font-size: 0.86rem;
+  }
+
+  .credit {
+    right: 12px;
+    bottom: 10px;
+    font-size: 0.64rem;
+  }
+}
